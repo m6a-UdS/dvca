@@ -1,0 +1,8 @@
+# OSX Files
+.DS_Store
+
+# The folder to which awscli will generate it's templates
+dist/*
+
+# Allow .gitkeep for folder structure
+!.gitkeep

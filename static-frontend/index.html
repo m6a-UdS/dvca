@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+<!--
+	Theory by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+-->
+<html>
+	<head>
+		<title>Damn Vulnerable Cloud Application</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+				<div class="inner">
+					<a href="https://medium.com/@mleblanc_82306" class="logo">A demonstration by MaxWhite</a>
+					<nav id="nav">
+						<a href="index.html">DVCA</a>
+						<a href="https://github.com/m6a-UdS/aws-dvca">GitHub</a>
+						<a href="https://medium.com/@mleblanc_82306">Medium</a>
+					</nav>
+					<a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
+				</div>
+			</header>
+
+		<!-- Banner -->
+			<section id="banner">
+				<h1>Damn Vulnerable Cloud Application</h1>
+				<p>Used to demonstrate how SSRF vulnerabilities can lead to disastrous results. Staying serverless will not save you...</p>
+			</section>
+
+		<!-- Three -->
+			<section id="three" class="wrapper special">
+				<div class="inner">
+					<header class="align-center">
+						<h2>Outgoing Webhook</h2>
+						<p>A classic WebHook debugger triggering our entrypoint SSRF</p>
+						<p>(Read <a href="https://medium.com/poka-techblog/server-side-request-forgery-ssrf-attacks-part-1-the-basics-a42ba5cc244a">this blog post</a> to learn about weaponizing WebHooks into SSRF)</p>
+					</header>
+					<div class="flex flex-1" style="width:100%;">
+						<article style="width:100%;">
+							<form id="hook" method="post" action="https://api.vulnerable.tech/test-hook">
+							<div class="12u 12u$(xsmall)">
+							</span><input type="text" name="handler" id="handler" value="" placeholder="http://... (Your Webhook URL)" />
+							</div>
+							<br />
+							<footer style="text-align: center;">
+								<input type="submit" value="Test your webhook!" />
+							</footer>
+						</form>
+						</article>
+						<hr style="width:100%;" />
+						<article class="align-center" style="width:100%; text-align: center;">
+							<h2><span class="icon fa-eye" style=""></span>&nbsp;See the result!</h2>
+							<p id="result">Check how your handler responded; The result of your test will appear here</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="inner">
+					<div class="flex">
+						<div class="copyright">
+							&copy; Maxime Leblanc. Design: <a href="https://templated.co">TEMPLATED</a>. Images: <a href="https://unsplash.com">Unsplash</a>.
+						</div>
+					</div>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Provision the Damn Vulnerable Cloud Application's Frontend
+
+Parameters:
+  DomainName:
+    Type: String
+  Certificate:
+    Type: String
+  HostedZoneId:
+    Type: String
+
+Globals:
+  Api:
+    Cors:
+      AllowMethods: "'*'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+
+Resources:
+  DVCAApi:
+    Type: AWS::Serverless::Api
+    Properties:
+        StageName: vulnerable
+        DefinitionBody:
+            swagger: 2.0
+            info:
+              title:
+                Ref: AWS::StackName
+            paths:
+              "/test-hook":
+                post:
+                  x-amazon-apigateway-integration:
+                    httpMethod: POST
+                    type: aws_proxy
+                    uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebhookServerlessFunction.Arn}/invocations
+
+  WebhookServerlessFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: webhook-tester.handler
+      Runtime: python3.6
+      CodeUri: ../serverless-backend
+      Environment:
+        Variables:
+          CORS: !Sub http://${DomainName}
+      Events:
+        GetApi:
+          Type: Api
+          Properties:
+            Path: /test-hook
+            Method: POST
+            RestApiId: !Ref DVCAApi
+
+  APIDomain:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      RecordSets:
+      - Name: !Ref CustomDomain
+        Type: A
+        AliasTarget:
+          DNSName: !GetAtt CustomDomain.DistributionDomainName
+          HostedZoneId: Z2FDTNDATAQYW2 # static ID for CloudFront aliases
+
+  CustomDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      CertificateArn: !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${Certificate}
+      DomainName: !Sub api.${DomainName}
+
+  BasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      DomainName: !Ref CustomDomain
+      RestApiId: !Ref DVCAApi
+      Stage: vulnerable
