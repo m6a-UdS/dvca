@@ -9,5 +9,7 @@ This is a demonstration project to show how to do privilege escalation on AWS. D
 ## Deployment
 ```
 make deploy-frontend DOMAIN_NAME=<your_aws_managed_domain_name>
-make deploy-backend DOMAIN_NAME=<your_aws_managed_domain_name> CERTIFICATE=<your_acm_certificate_id> HOSTED_ZONE=<your_hosted_zone_id>
+make deploy-backend DOMAIN_NAME=<your_aws_managed_domain_name> \
+  CERTIFICATE=<your_acm_certificate_id> \
+  HOSTED_ZONE=<your_hosted_zone_id>
 ```

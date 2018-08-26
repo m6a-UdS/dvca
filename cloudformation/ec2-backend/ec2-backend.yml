@@ -1,0 +1,91 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Provision the Damn Vulnerable Cloud Application's EC2 Backend
+
+Parameters:
+  DomainName:
+    Type: String
+  Certificate:
+    Type: String
+  HostedZoneId:
+    Type: String
+
+Resources:
+  Ec2Backend:
+    Type: AWS::EC2::Instance
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref Ec2BackendLaunchTemplate
+        Version: !GetAtt Ec2BackendLaunchTemplate.LatestVersionNumber
+      SubnetId: !ImportValue DVCA-SubnetNatAZ0
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}
+
+  Ec2BackendLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: ami-04681a1dbd79675a5
+        InstanceType: t2.nano
+        SecurityGroupIds:
+        - !Ref Ec2BackendSecurityGroup
+        BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+            VolumeType: gp2
+        UserData:
+          Fn::Base64:
+            Fn::Join:
+              - "\n"
+              - - "#cloud-config"
+
+  APIDomain:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub ec2-api.${DomainName}
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+      - !ImportValue DVCA-ApplicationLoadBalancerDns
+
+  Ec2BackendSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !ImportValue DVCA-VPC
+      GroupDescription: Access to the EC2 Backend only from the ALB
+      SecurityGroupIngress:
+      - SourceSecurityGroupId: !ImportValue DVCA-ApplicationLoadBalancerSecurityGroup
+        IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+
+  DVCATargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !ImportValue DVCA-VPC
+      Port: 80
+      Protocol: HTTP
+      TargetType: instance
+      Targets:
+      - Id: !Ref Ec2Backend
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+
+  HttpListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !ImportValue DVCA-DVCALoadBalancerListenerArn
+      Priority: 1
+      Conditions:
+      - Field: host-header
+        Values:
+        - !Sub ec2-api.${DomainName}
+      Actions:
+      - TargetGroupArn: !Ref DVCATargetGroup
+        Type: forward

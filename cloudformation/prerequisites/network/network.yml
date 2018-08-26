@@ -1,0 +1,39 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Provision the Damn Vulnerable Cloud Application's Fargate network
+
+Parameters:
+  DomainName:
+    Type: String
+  Certificate:
+    Type: String
+  HostedZoneId:
+    Type: String
+
+Resources:
+  Vpc:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: vpc.yml
+
+  Subnets:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: subnets.yml
+      Parameters:
+        VpcId: !GetAtt Vpc.Outputs.VPC
+        NatEIPAZ0: !GetAtt Vpc.Outputs.NatEIPAZ0
+        NatEIPAZ1: !GetAtt Vpc.Outputs.NatEIPAZ1
+        InternetGateway: !GetAtt Vpc.Outputs.VPCInternetGateway
+
+  ALB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: application-load-balancer.yml
+      Parameters:
+        VpcId: !GetAtt Vpc.Outputs.VPC
+        SubnetAZ0: !GetAtt Subnets.Outputs.SubnetAZ0
+        SubnetAZ1: !GetAtt Subnets.Outputs.SubnetAZ1
+        Certificate: !Ref Certificate
+        DomainName: !Ref DomainName
+        HostedZoneId: !Ref HostedZoneId

@@ -1,0 +1,77 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Provision the Damn Vulnerable Cloud Application's Frontend"
+
+Parameters:
+  DomainName:
+    Type: String
+  HostedZoneId:
+    Type: String
+  Certificate:
+    Type: String
+
+Resources:
+  DVCAFrontendBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Ref DomainName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+  DVCAFrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DVCAFrontendBucket
+      PolicyDocument:
+        Version: '2008-10-17'
+        Statement:
+        - Sid: DVCAFrontendBucketPolicy
+          Effect: Allow
+          Principal: '*'
+          Action:
+          - s3:GetObject
+          Resource:
+          - !Sub arn:aws:s3:::${DVCAFrontendBucket}/*
+
+  WebsiteCloudfront:
+      Type: AWS::CloudFront::Distribution
+      DependsOn:
+      - DVCAFrontendBucket
+      Properties:
+        DistributionConfig:
+          Comment: Cloudfront Distribution pointing to DVCA's S3 bucket
+          Aliases:
+          - !Ref DomainName
+          Origins:
+          - DomainName: !GetAtt DVCAFrontendBucket.DomainName
+            Id: S3Origin
+            S3OriginConfig: {}
+          Enabled: true
+          HttpVersion: 'http2'
+          DefaultRootObject: index.html
+          DefaultCacheBehavior:
+            AllowedMethods:
+            - GET
+            - HEAD
+            Compress: true
+            TargetOriginId: S3Origin
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+          PriceClass: PriceClass_100
+          ViewerCertificate:
+            AcmCertificateArn: !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${Certificate}
+            SslSupportMethod: sni-only
+
+  WebsiteDNSName:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref 'DomainName'
+      Type: A
+      AliasTarget:
+        HostedZoneId: Z2FDTNDATAQYW2
+        DNSName: !GetAtt [WebsiteCloudfront, DomainName]

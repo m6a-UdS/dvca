@@ -1,0 +1,136 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Provision the Damn Vulnerable Cloud Application's Fargate Backend
+
+Parameters:
+  DomainName:
+    Type: String
+  Certificate:
+    Type: String
+
+Resources:
+  DVCATask:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties:
+      Family: vulnerable-backend
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+      - FARGATE
+      Cpu: 256
+      Memory: 0.5GB
+      ContainerDefinitions:
+      - Name: dvca-fargate-backend
+        Image: !Sub
+        - '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepo}'
+        - ECRRepo: !ImportValue DVCA-ECRRepo
+        MemoryReservation: 256
+        PortMappings:
+        - ContainerPort: 80
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref AWS::StackName
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: dvca-fargate-backend
+      ExecutionRoleArn: !Ref DVCATaskRole
+      TaskRoleArn: !Ref DVCATaskRole
+
+  DVCASecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !ImportValue DVCA-VPC
+      GroupDescription: Allow access to DVCA's  from anywhere
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+
+  CloudWatchLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref AWS::StackName
+      RetentionInDays: 365
+
+  DVCAService:
+    Type: AWS::ECS::Service
+    DependsOn: DVCATargetGroup
+    Properties:
+      Cluster: !ImportValue DVCA-ECSCluster
+      DesiredCount: 1
+      TaskDefinition: !Ref DVCATask
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+          - !Ref DVCASecurityGroup
+          Subnets:
+          - !ImportValue DVCA-SubnetNatAZ0
+          - !ImportValue DVCA-SubnetNatAZ1
+      LoadBalancers:
+      - ContainerName: dvca-fargate-backend
+        ContainerPort: 80
+        TargetGroupArn: !Ref DVCATargetGroup
+
+  DVCATargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !ImportValue DVCA-VPC
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+
+  HttpListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !ImportValue DVCA-DVCALoadBalancerListenerArn
+      Priority: 2
+      Conditions:
+      - Field: host-header
+        Values:
+        - !Sub fargate-api.${DomainName}
+      Actions:
+      - TargetGroupArn: !Ref DVCATargetGroup
+        Type: forward
+
+  DVCASecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !ImportValue DVCA-VPC
+      GroupDescription: Allow access to DVCA from anywhere
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+
+  DVCATaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: ecs-tasks.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      Policies:
+      - PolicyName: !Sub ${AWS::StackName}-DVCATaskPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - ecr:GetAuthorizationToken
+            - ecr:BatchCheckLayerAvailability
+            - ecr:GetDownloadUrlForLayer
+            - ecr:BatchGetImage
+            - logs:Create*
+            - logs:Put*
+            Resource: '*'

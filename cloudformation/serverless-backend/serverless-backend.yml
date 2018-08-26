@@ -1,6 +1,7 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Provision the Damn Vulnerable Cloud Application's Frontend
+Description: Provision the Damn Vulnerable Cloud Application's Serverless Backend
 
 Parameters:
   DomainName:
@@ -9,13 +10,6 @@ Parameters:
     Type: String
   HostedZoneId:
     Type: String
-
-Globals:
-  Api:
-    Cors:
-      AllowMethods: "'*'"
-      AllowHeaders: "'*'"
-      AllowOrigin: "'*'"
 
 Resources:
   DVCAApi:
@@ -67,7 +61,7 @@ Resources:
     Type: AWS::ApiGateway::DomainName
     Properties:
       CertificateArn: !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${Certificate}
-      DomainName: !Sub api.${DomainName}
+      DomainName: !Sub serverless-api.${DomainName}
 
   BasePathMapping:
     Type: AWS::ApiGateway::BasePathMapping

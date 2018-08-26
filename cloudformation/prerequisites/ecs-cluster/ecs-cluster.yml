@@ -1,0 +1,24 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Provision the Damn Vulnerable Cloud Application's Fargate Backend's ECR Repo
+
+Resources:
+  ECSCluster:
+    Type: "AWS::ECS::Cluster"
+    Properties:
+      ClusterName: !Ref AWS::StackName
+
+  ECRRepo:
+    Type: "AWS::ECR::Repository"
+    Properties:
+      RepositoryName: dvca-fargate-backend
+
+Outputs:
+  ECRRepo:
+    Value: !Ref ECRRepo
+    Export:
+      Name: DVCA-ECRRepo
+  ECSCluster:
+    Value: !Ref ECSCluster
+    Export:
+      Name: DVCA-ECSCluster

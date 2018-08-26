@@ -1,0 +1,54 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Provision the Damn Vulnerable Cloud Application's Fargate Backend's VPC
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  InternetGatewayAttachement:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  NatEIPAZ0:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachement
+    Properties:
+      Domain: vpc
+
+  NatEIPAZ1:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachement
+    Properties:
+      Domain: vpc
+
+Outputs:
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: DVCA-VPC
+
+  VPCInternetGateway:
+    Value: !Ref InternetGateway
+    Export:
+      Name: DVCA-InternetGateway
+
+  NatEIPAZ0:
+    Value: !GetAtt NatEIPAZ0.AllocationId
+    Export:
+      Name: DVCA-NatEIPAZ0-AllocationId
+
+  NatEIPAZ1:
+    Value: !GetAtt NatEIPAZ1.AllocationId
+    Export:
+      Name: DVCA-NatEIPAZ1-AllocationId

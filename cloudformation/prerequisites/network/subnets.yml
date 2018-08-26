@@ -1,0 +1,131 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Provision the Damn Vulnerable Cloud Application's Fargate Backend's subnets
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  NatEIPAZ0:
+    Type: String
+  NatEIPAZ1:
+    Type: String
+  InternetGateway:
+    Type: String
+
+Resources:
+  SubnetAZ0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone:
+        Fn::Select:
+        - '0'
+        - Fn::GetAZs: ''
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: DVCA-SubnetAZ0
+  SubnetAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone:
+        Fn::Select:
+        - '1'
+        - Fn::GetAZs: ''
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: DVCA-SubnetAZ1
+  SubnetNatAZ0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone:
+        Fn::Select:
+        - '0'
+        - Fn::GetAZs: ''
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: DVCA-SubnetNatAZ0
+  SubnetNatAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone:
+        Fn::Select:
+        - '1'
+        - Fn::GetAZs: ''
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: DVCA-SubnetNatAZ1
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: DVCA-RouteTable
+  NatRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: DVCA-NatRouteTable
+  RouteTableAssociationAZ0:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetAZ0
+  RouteTableAssociationAZ1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetAZ1
+  RouteTableAssociationNatAZ0:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable
+      SubnetId: !Ref SubnetNatAZ0
+  RouteTableAssociationNatAZ1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable
+      SubnetId: !Ref SubnetNatAZ1
+  NatGatewayAZ0:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref SubnetAZ0
+      AllocationId: !Ref NatEIPAZ0
+  SubnetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  NatAZ0SubnetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref NatRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayAZ0
+Outputs:
+  SubnetAZ0:
+    Value: !Ref SubnetAZ0
+    Export:
+      Name: DVCA-SubnetAZ0
+  SubnetAZ1:
+    Value: !Ref SubnetAZ1
+    Export:
+      Name: DVCA-SubnetAZ1
+  SubnetNatAZ0:
+    Value: !Ref SubnetNatAZ0
+    Export:
+      Name: DVCA-SubnetNatAZ0
+  SubnetNatAZ1:
+    Value: !Ref SubnetNatAZ1
+    Export:
+      Name: DVCA-SubnetNatAZ1
