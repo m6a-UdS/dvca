@@ -13,33 +13,76 @@ Parameters:
 Resources:
   Ec2Backend:
     Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+          - yum:
+              docker: []
     Properties:
-      LaunchTemplate:
-        LaunchTemplateId: !Ref Ec2BackendLaunchTemplate
-        Version: !GetAtt Ec2BackendLaunchTemplate.LatestVersionNumber
+      ImageId: ami-04681a1dbd79675a5
+      InstanceType: t2.nano
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: 8
+          VolumeType: gp2
+      IamInstanceProfile: !Ref Ec2InstanceProfile
+      SecurityGroupIds:
+      - !Ref Ec2BackendSecurityGroup
       SubnetId: !ImportValue DVCA-SubnetNatAZ0
       Tags:
       - Key: Name
         Value: !Sub ${AWS::StackName}
+      UserData:
+        "Fn::Base64": !Sub |
+          #!/bin/bash
 
-  Ec2BackendLaunchTemplate:
-    Type: AWS::EC2::LaunchTemplate
+          yum install -y docker
+          service docker start
+
+          export CONTAINER_NAME=dvca-backent
+
+          #Use AWS IAM to pull the ECR container
+          $(aws ecr get-login --no-include-email --region ${AWS::Region})
+
+          docker pull ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/dvca-fargate-backend
+          docker rm $CONTAINER_NAME || true
+          docker run --name $CONTAINER_NAME -p 80:80 -d --restart=always ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/dvca-fargate-backend
+
+          docker rm $CONTAINER_NAME
+
+  Ec2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
     Properties:
-      LaunchTemplateData:
-        ImageId: ami-04681a1dbd79675a5
-        InstanceType: t2.nano
-        SecurityGroupIds:
-        - !Ref Ec2BackendSecurityGroup
-        BlockDeviceMappings:
-        - DeviceName: /dev/xvda
-          Ebs:
-            VolumeSize: 8
-            VolumeType: gp2
-        UserData:
-          Fn::Base64:
-            Fn::Join:
-              - "\n"
-              - - "#cloud-config"
+      Roles:
+      - !Ref DVCAExecutionRole
+
+  DVCAExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: ec2.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      Policies:
+      - PolicyName: !Sub ${AWS::StackName}-DVCAExecutionPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - ecr:GetAuthorizationToken
+            - ecr:BatchCheckLayerAvailability
+            - ecr:GetDownloadUrlForLayer
+            - ecr:BatchGetImage
+            - logs:Create*
+            - logs:Put*
+            Resource: '*'
 
   APIDomain:
     Type: AWS::Route53::RecordSet

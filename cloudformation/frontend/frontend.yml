@@ -75,3 +75,9 @@ Resources:
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
         DNSName: !GetAtt [WebsiteCloudfront, DomainName]
+
+Outputs:
+  VPC:
+    Value: !Ref DVCAFrontendBucket
+    Export:
+      Name: DVCA-Bucket

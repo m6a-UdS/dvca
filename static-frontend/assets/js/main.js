@@ -66,12 +66,13 @@
 })(jQuery);
 $("#hook").submit(
     function(event){
+			  api = "https://"+$('input[name="backend"]:checked').attr('id')+'.'+window.location.hostname+"/test-hook"
         $.ajax({
           type: 'POST',
-          url: $("#hook").attr("action"),
+          url: api,
           data: $("#hook").serialize(),
           success: function(response) {
-            $("#result").text(response.content);
+            $("#result").text(JSON.parse(response).content);
           },
         });
         event.preventDefault();

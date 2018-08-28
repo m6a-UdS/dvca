@@ -42,10 +42,27 @@
 					</header>
 					<div class="flex flex-1" style="width:100%;">
 						<article style="width:100%;">
-							<form id="hook" method="post" action="https://fargate-api.vulnerable.tech/test-hook">
+							<form id="hook" method="post">
 							<div class="12u 12u$(xsmall)">
-							</span><input type="text" name="handler" id="handler" value="" placeholder="http://... (Your Webhook URL)" />
+							<input type="text" name="handler" id="handler" value="" placeholder="http://... (Your Webhook URL)" />
 							</div>
+							<br />
+							<div class="12u 12u$(xsmall)">
+							<h3 style="text-align: center;">Choose your backend</h3>
+							</div>
+							<div style="display: inline-block;text-align: center; width:33%">
+								<input type="radio" id="serverless-api" name="backend">
+								<label for="serverless-api">Serverless Backend</label>
+							</div>
+							<div style="display: inline-block;text-align: center; width:33%">
+								<input type="radio" id="fargate-api" name="backend">
+								<label for="fargate-api">Fargate Backend</label>
+							</div>
+							<div style="display: inline-block;text-align: center; width:33%">
+								<input type="radio" id="ec2-api" name="backend">
+								<label for="ec2-api">EC2 Backend</label>
+							</div>
+							<br />
 							<br />
 							<footer style="text-align: center;">
 								<input type="submit" value="Test your webhook!" />

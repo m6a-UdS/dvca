@@ -32,7 +32,7 @@ Resources:
             awslogs-group: !Ref AWS::StackName
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: dvca-fargate-backend
-      ExecutionRoleArn: !Ref DVCATaskRole
+      ExecutionRoleArn: !Ref DVCAExecutionRole
       TaskRoleArn: !Ref DVCATaskRole
 
   DVCASecurityGroup:
@@ -122,6 +122,29 @@ Resources:
           - "sts:AssumeRole"
       Policies:
       - PolicyName: !Sub ${AWS::StackName}-DVCATaskPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:ListBucket
+            Resource: '*'
+
+  DVCAExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: ecs-tasks.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      Policies:
+      - PolicyName: !Sub ${AWS::StackName}-DVCAExecutionPolicy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
