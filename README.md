@@ -34,4 +34,5 @@ make fargate DOMAIN_NAME=<your_aws_managed_domain_name> \
 Just be careful: The frontend needs your root domain Certificate ID for the CloudFront distribution, while the rest just needs your wildcard Certificate ID
 
 In the end, you should end-up with something like this  :-)
+
 ![DVCA](https://raw.githubusercontent.com/m6a-UdS/dvca/master/img/DVCA.png)
