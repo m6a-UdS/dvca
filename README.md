@@ -13,7 +13,10 @@ More details about how to use it are available on my [blog](https://medium.com/p
 ## Deployment
 _In theory_, you should be able to deploy the Damn Vulnerable Cloud Application with a simple command:
 ```
-make all DOMAIN_NAME=<your_aws_managed_domain_name> ROOT_CERTIFICATE=<your_root_acm_certificate_id> CERTIFICATE=<your_acm_certificate_id> HOSTED_ZONE=<your_hosted_zone_id>
+make all DOMAIN_NAME=<your_aws_managed_domain_name> \
+  ROOT_CERTIFICATE=<your_root_acm_certificate_id> \
+  CERTIFICATE=<your_acm_certificate_id> \
+  HOSTED_ZONE=<your_hosted_zone_id>
 ```
 
 But the project is modular, so you could also deploy it in multiple steps. Typical `make` resources would be: prerequisites,
