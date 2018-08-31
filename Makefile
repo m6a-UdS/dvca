@@ -47,7 +47,7 @@ ecs: package-ecs
 	aws cloudformation deploy --template-file $(GENERATED_ECS_TEMPLATE_ABSOLUTE_PATH) --stack-name DVCA-Ecs --capabilities CAPABILITY_IAM
 
 frontend: package-frontend
-	aws cloudformation deploy --template-file $(GENERATED_FRONTEND_TEMPLATE_ABSOLUTE_PATH) --stack-name DVCA-Frontend --parameter-overrides DomainName=$(DOMAIN_NAME) Certificate=$(CERTIFICATE) HostedZoneId=$(HOSTED_ZONE)
+	aws cloudformation deploy --template-file $(GENERATED_FRONTEND_TEMPLATE_ABSOLUTE_PATH) --stack-name DVCA-Frontend --parameter-overrides DomainName=$(DOMAIN_NAME) Certificate=$(ROOT_CERTIFICATE) HostedZoneId=$(HOSTED_ZONE)
 	aws s3 sync static-frontend/ s3://$(DOMAIN_NAME) --exclude "*/.DS_Store"
 
 serverless: package-serverless
@@ -70,3 +70,5 @@ build-and-push-container:
 docker: ecs build-and-push-container
 
 prerequisites: network docker
+
+all: prerequisites frontend serverless fargate ec2
