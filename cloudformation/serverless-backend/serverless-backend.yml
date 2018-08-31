@@ -34,10 +34,10 @@ Resources:
     Properties:
       Handler: webhook-tester.handler
       Runtime: python3.6
-      CodeUri: ../serverless-backend
+      CodeUri: ../../serverless-backend
       Environment:
         Variables:
-          CORS: !Sub http://${DomainName}
+          CORS: !Sub https://${DomainName}
       Events:
         GetApi:
           Type: Api

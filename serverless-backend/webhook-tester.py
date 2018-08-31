@@ -8,16 +8,12 @@ from os import listdir
 # from botocore.vendored import requests
 
 def handler(event, context):
-    url=unquote(event["body"]).split('=')[1]
+    url=unquote(event["body"]).split('&')[0].split('=')[1]
     print(f"URL: {url}")
 
     client=boto3.client('sts')
-    # response_text = urlopen(url).read().decode("utf-8", "backslashreplace")
-    try:
-        response_text=pprint.pformat(os.listdir(url))
-    except:
-        response_text = urlopen('file://'+url).read().decode("utf-8", "backslashreplace")
-    #response_text=requests.get(url).text
+    response_text = urlopen(url).read().decode("utf-8", "backslashreplace")
+
     return {
         "statusCode": 200,
         "body": json.dumps(
@@ -28,6 +24,7 @@ def handler(event, context):
         "headers": {
             "Access-Control-Allow-Methods":
                 "OPTIONS,POST",
-            "Access-Control-Allow-Origin": os.environ["CORS"]
+            "Access-Control-Allow-Origin": os.environ["CORS"],
+            "Content-Type": "text/plain"
         }
     }
