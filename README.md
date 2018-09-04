@@ -1,4 +1,4 @@
-# AWS Damn Vulnerable Cloud Application
+# Damn Vulnerable Cloud Application
 This is a demonstration project to show how to do privilege escalation on AWS. DO NOT deploy this on an AWS account unless you know very well what you are doing!
 
 ## Implemented Cloud Providers & Vulnerabilities
