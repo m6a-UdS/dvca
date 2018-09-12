@@ -19,7 +19,7 @@ make all DOMAIN_NAME=<your_aws_managed_domain_name> \
   HOSTED_ZONE=<your_hosted_zone_id>
 ```
 
-But the project is modular, so you could also deploy it in multiple steps. Typical `make` resources would be: prerequisites,
+But the project is modular, so you could also deploy it in multiple steps. Typical `make` resources would be: prerequisites, frontend and a backend of your choice
 ```
 make prerequisites DOMAIN_NAME=<your_aws_managed_domain_name> \
   CERTIFICATE=<your_acm_certificate_id> \
